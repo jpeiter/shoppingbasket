@@ -1,7 +1,9 @@
 package com.interview.shoppingbasket;
 
+import java.util.List;
+
 public class RetailPriceCheckoutStep implements CheckoutStep {
-    private PricingService pricingService;
+    private final PricingService pricingService;
     private double retailTotal;
 
     public RetailPriceCheckoutStep(PricingService pricingService) {
@@ -12,21 +14,28 @@ public class RetailPriceCheckoutStep implements CheckoutStep {
     public void execute(CheckoutContext checkoutContext) {
         Basket basket = checkoutContext.getBasket();
         retailTotal = 0.0;
+        List<Promotion> promotions = checkoutContext.getPromotions();
 
-        for (BasketItem basketItem: basket.getItems()) {
+        for (BasketItem basketItem : basket.getItems()) {
+            String productCode = basketItem.getProductCode();
             int quantity = basketItem.getQuantity();
-            double price = pricingService.getPrice(basketItem.getProductCode());
+            double price = pricingService.getPrice(productCode);
+
             basketItem.setProductRetailPrice(price);
-            retailTotal += quantity*price;
+
+            promotions.stream()
+                    .filter(p -> p.getProductCode().equalsIgnoreCase(productCode))
+                    .findFirst()
+                    .ifPresentOrElse(
+                            promotion -> retailTotal += applyPromotion(promotion, basketItem, price),
+                            () -> retailTotal += quantity * price
+                    );
         }
 
         checkoutContext.setRetailPriceTotal(retailTotal);
     }
 
     public double applyPromotion(Promotion promotion, BasketItem item, double price) {
-        /*
-         * Implement applyPromotion method
-         */
-        return retailTotal;
+        return promotion.apply(item.getQuantity(), price);
     }
 }
