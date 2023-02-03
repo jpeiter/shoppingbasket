@@ -87,9 +87,9 @@ public class CheckoutPipelineTest {
         checkoutPipeline.addStep(checkoutStep1);
         checkoutPipeline.addStep(checkoutStep2);
         checkoutPipeline.addStep(checkoutStep3);
-
         PaymentSummary summary = checkoutPipeline.checkout(basket);
 
+        verify(pricingService, times(1)).getPrice("productCode0");
         verify(pricingService, times(1)).getPrice("productCode1");
         verify(pricingService, times(1)).getPrice("productCode2");
 
